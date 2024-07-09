@@ -15,54 +15,69 @@ from dfpl.utils import parseCmdArgs
 @dataclass
 class Options:
     """
-    Dataclass for all options necessary for training the neural nets
+    Dataclass for all options necessary for training and inferring the neural nets.
+    Corresponds to `dfpl train` and `dfpl predict`.
     """
 
-    configFile: str = None
-    inputFile: str = "tests/data/smiles.csv"
-    outputDir: str = "example/results_train/"  # changes according to mode
-    outputFile: str = "results.csv"
-    ecWeightsFile: str = ""
-    ecModelDir: str = "example/results_train/AE_encoder/"
-    fnnModelDir: str = "example/results_train/AR_saved_model/"
-    type: str = "smiles"
-    fpType: str = "topological"  # also "MACCS", "atompairs"
-    epochs: int = 100
-    fpSize: int = 2048
-    encFPSize: int = 256
-    kFolds: int = 1
-    testSize: float = 0.2
-    enableMultiLabel: bool = False
-    verbose: int = 2
-    trainAC: bool = False
-    trainFNN: bool = True
-    compressFeatures: bool = False
-    sampleFractionOnes: float = 0.5
-    sampleDown: bool = False
-    split_type: str = "random"
-    aeSplitType: str = "random"
-    aeType: str = "deterministic"
-    aeEpochs: int = 100
-    aeBatchSize: int = 512
-    aeLearningRate: float = 0.001
-    aeLearningRateDecay: float = 0.96
-    aeActivationFunction: str = "selu"
-    aeOptimizer: str = "Adam"
-    fnnType: str = "FNN"
-    batchSize: int = 128
-    optimizer: str = "Adam"
-    learningRate: float = 0.001
-    learningRateDecay: float = 0.96
-    lossFunction: str = "bce"
-    activationFunction: str = "relu"
-    l2reg: float = 0.001
-    dropout: float = 0.2
-    threshold: float = 0.5
-    visualizeLatent: bool = False  # only if autoencoder is trained or loaded
-    gpu: int = None
-    aeWabTracking: bool = False  # Wand & Biases autoencoder tracking
-    wabTracking: bool = False  # Wand & Biases FNN tracking
-    wabTarget: str = "AR"  # Wand & Biases target used for showing training progress
+    # used for both "train" and "predict":
+    configFile: str
+    inputFile: str
+    outputDir: str
+    outputFile: str
+    ecWeightsFile: str
+    ecModelDir: str
+    type: str
+    fpType: str
+    compressFeatures: bool
+    aeType: str
+
+    # used only for "train":
+    epochs: int
+    fpSize: int
+    encFPSize: int
+    kFolds: int
+    testSize: float
+    enableMultiLabel: bool
+    verbose: int
+    trainAC: bool
+    trainFNN: bool
+    sampleFractionOnes: float
+    sampleDown: bool
+    split_type: str
+    aeSplitType: str
+    aeEpochs: int
+    aeBatchSize: int
+    aeLearningRate: float
+    aeLearningRateDecay: float
+    aeActivationFunction: str
+    batchSize: int
+    optimizer: str
+    learningRate: float
+    learningRateDecay: float
+    lossFunction: str
+    activationFunction: str
+    l2reg: float
+    dropout: float
+    threshold: float
+    visualizeLatent: bool
+    gpu: int
+    aeWabTracking: bool
+    wabTracking: bool
+    wabTarget: str
+
+    # used only for "predict":
+    fnnModelDir: str
+
+    # todo: The "aeOptimizer" attribute is neither parsed nor used anywhere
+    #       (as far as I can see). Might be a relict from the past.
+    #       Proposal: Remove this declaration.
+    aeOptimizer: str
+    # todo: The "fnnType" attribute is not being parsed in the parsing methods
+    #       (parseInputTrain(), parseInputPredict()).
+    #       However, it is used throughout the code.
+    #       The values are being set via.
+    #       Proposal: Add parsing for "--fnnType".
+    fnnType: str
 
     def saveToFile(self, file: str) -> None:
         """
@@ -279,7 +294,7 @@ def parseInputTrain(parser_train: argparse.ArgumentParser) -> None:
         metavar="FILE",
         type=str,
         help="Input JSON file that contains all information for training/predicting.",
-        default="example/train.json",
+        default=None,
     )
     input_tain_general_args.add_argument(
         "-i",
@@ -297,7 +312,7 @@ def parseInputTrain(parser_train: argparse.ArgumentParser) -> None:
         type=str,
         help="Prefix of output file name. Trained model and "
         "respective stats will be returned in this directory.",
-        default="example/results_train/",
+        default="example/results_train/",  # changes according to mode
     )
 
     # TODO CHECK WHAT IS TYPE DOING?
@@ -328,6 +343,8 @@ def parseInputTrain(parser_train: argparse.ArgumentParser) -> None:
     input_tain_general_args.add_argument(
         "--fpType",
         type=str,
+        # todo: A previous comment in class "Options" listed an additional option "atompairs".
+        #       Either add this option here or remove this comment.
         choices=["topological", "MACCS"],
         help="The type of fingerprint to be generated/used in input file. MACCS or topological are available.",
         default="topological",
@@ -423,6 +440,7 @@ def parseInputTrain(parser_train: argparse.ArgumentParser) -> None:
         help="Size of encoded fingerprint (z-layer of autoencoder).",
         default=256,
     )
+    # only if autoencoder is trained or loaded
     input_tain_autoencoder_args.add_argument(
         "--visualizeLatent",
         action="store_true",
@@ -554,6 +572,7 @@ def parseInputTrain(parser_train: argparse.ArgumentParser) -> None:
         default="relu",
     )
     # Tracking Configuration
+    # Wand & Biases autoencoder tracking
     input_tain_tracking_args.add_argument(
         "--aeWabTracking",
         metavar="BOOL",
@@ -561,6 +580,7 @@ def parseInputTrain(parser_train: argparse.ArgumentParser) -> None:
         help="Track autoencoder performance via Weights & Biases.",
         default=False,
     )
+    # Wand & Biases FNN tracking
     input_tain_tracking_args.add_argument(
         "--wabTracking",
         metavar="BOOL",
@@ -568,6 +588,7 @@ def parseInputTrain(parser_train: argparse.ArgumentParser) -> None:
         help="Track FNN performance via Weights & Biases",
         default=False,
     )
+    # Wand & Biases target used for showing training progress
     input_tain_tracking_args.add_argument(
         "--wabTarget",
         metavar="STRING",
@@ -592,6 +613,7 @@ def parseInputPredict(parser_input_predict: argparse.ArgumentParser) -> None:
         metavar="FILE",
         type=str,
         help="JSON file that contains all information for training/predicting.",
+        default=None,
     )
     input_predict_files_args.add_argument(
         "-i",
