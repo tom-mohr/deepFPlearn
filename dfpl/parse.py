@@ -3,8 +3,12 @@ import json
 from argparse import Namespace
 from pathlib import Path
 
-from dfpl.options import parseInterpretGnn, parsePredictGnn, parseTrainGnn, parseInputTrain, parseInputPredict, \
-    parseInputConvert
+from dfpl.convert import parseInputConvert
+from dfpl.interpretgnn import parseInterpretGnn
+from dfpl.predictgnn import parsePredictGnn
+from dfpl.traingnn import parseTrainGnn
+from dfpl.train import parseInputTrain
+from dfpl.predict import parseInputPredict
 
 
 def parse_dfpl(*cli_args: str, **kwargs) -> Namespace:

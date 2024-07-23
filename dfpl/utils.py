@@ -368,3 +368,28 @@ def log_scaffold_stats(
             )
         logging.info("\n")
     return stats
+
+
+def createLogger(filename: str) -> None:
+    """
+    Set up a logger for the main function that also saves to a log file
+    """
+    # get root logger and set its level
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+    # create file handler which logs info messages
+    fh = logging.FileHandler(filename, mode="w")
+    fh.setLevel(logging.INFO)
+    # create console handler
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.INFO)
+    # create formatter and add it to the handlers
+    formatterFile = logging.Formatter(
+        "{asctime} - {name} - {levelname} - {message}", style="{"
+    )
+    formatterConsole = logging.Formatter("{levelname} {message}", style="{")
+    fh.setFormatter(formatterFile)
+    ch.setFormatter(formatterConsole)
+    # add the handlers to the logger
+    logger.addHandler(fh)
+    logger.addHandler(ch)
