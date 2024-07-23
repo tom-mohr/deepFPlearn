@@ -67,7 +67,7 @@ def define_out_file_names(path_prefix: str, target: str, fold: int = -1) -> tupl
 
 
 def define_nn_multi_label_model(
-    input_size: int, output_size: int, opts: options.Options
+    input_size: int, output_size: int, opts: options.TrainOptions
 ) -> Model:
     if opts.optimizer == "Adam":
         my_optimizer = optimizers.Adam(learning_rate=opts.learningRate)
@@ -231,7 +231,7 @@ def validate_multi_model_on_test_data(
     return [f1_random, f1_trained]
 
 
-def train_nn_models_multi(df: pd.DataFrame, opts: options.Options) -> None:
+def train_nn_models_multi(df: pd.DataFrame, opts: options.TrainOptions) -> None:
     # find target columns
     names_y = [
         c

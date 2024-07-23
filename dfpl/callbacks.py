@@ -7,7 +7,7 @@ from wandb.keras import WandbCallback
 from dfpl import options, settings
 
 
-def autoencoder_callback(checkpoint_path: str, opts: options.Options) -> list:
+def autoencoder_callback(checkpoint_path: str, opts: options.TrainOptions) -> list:
     """
     Callbacks for fitting the autoencoder
 
@@ -49,7 +49,7 @@ def autoencoder_callback(checkpoint_path: str, opts: options.Options) -> list:
     return callbacks
 
 
-def nn_callback(checkpoint_path: str, opts: options.Options) -> list:
+def nn_callback(checkpoint_path: str, opts: options.TrainOptions) -> list:
     """
     Callbacks for fitting the feed forward network (FNN)
 

@@ -1,5 +1,4 @@
 {
-  "py/object": "dfpl.options.Options",
   "inputFile": "tests/data/S_dataset.csv",
   "outputDir": "example/results_train/",
   "ecModelDir": "example/results_train/",
@@ -13,7 +12,6 @@
   "aeSplitType": "random",
   "aeEpochs": 2,
   "aeBatchSize": 351,
-  "aeOptimizer": "Adam",
   "aeActivationFunction": "relu",
   "aeLearningRate": 0.001,
   "aeLearningRateDecay": 0.0001,
@@ -26,7 +24,6 @@
   "enableMultiLabel": false,
   "sampleFractionOnes": 0,
   "sampleDown": false,
-  "gpu": "",
 
   "trainFNN": true,
   "kFolds": 1,
@@ -43,6 +40,5 @@
   "l2reg": 0.001,
 
   "aeWabTracking": false,
-  "wabTracking": false,
-  "wabTarget": ""
+  "wabTracking": false
 }

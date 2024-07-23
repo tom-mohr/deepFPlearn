@@ -2,38 +2,37 @@ from __future__ import annotations
 
 import argparse
 from dataclasses import dataclass
-from pathlib import Path
 from typing import List, Literal, Optional
 
-import jsonpickle
-import torch
+# import torch
 from chemprop.args import InterpretArgs, PredictArgs, TrainArgs
-
-from dfpl.utils import parseCmdArgs
 
 
 @dataclass
-class Options:
+class TrainPredictCommonOptions:
     """
-    Dataclass for all options necessary for training and inferring the neural nets.
+    Dataclass for all options needed both for training and inferring the neural nets.
     Corresponds to `dfpl train` and `dfpl predict`.
     """
-
-    # used for both "train" and "predict":
-    configFile: str
     inputFile: str
     outputDir: str
-    outputFile: str
     ecWeightsFile: str
     ecModelDir: str
     type: str
     fpType: str
     compressFeatures: bool
     aeType: str
-
-    # used only for "train":
-    epochs: int
+    fnnType: str
     fpSize: int
+
+
+@dataclass
+class TrainOptions(TrainPredictCommonOptions):
+    """
+    Dataclass for all options necessary for training the neural nets.
+    Corresponds to `dfpl train`.
+    """
+    epochs: int
     encFPSize: int
     kFolds: int
     testSize: float
@@ -65,31 +64,15 @@ class Options:
     wabTracking: bool
     wabTarget: str
 
-    # used only for "predict":
+
+@dataclass
+class PredictOptions(TrainPredictCommonOptions):
+    """
+    Dataclass for all options necessary for inferring the neural nets.
+    Corresponds to `dfpl predict`.
+    """
+    outputFile: str
     fnnModelDir: str
-
-    # todo: The "aeOptimizer" attribute is neither parsed nor used anywhere
-    #       (as far as I can see). Might be a relict from the past.
-    #       Proposal: Remove this declaration.
-    aeOptimizer: str
-    # todo: The "fnnType" attribute is not being parsed in the parsing methods
-    #       (parseInputTrain(), parseInputPredict()).
-    #       However, it is used throughout the code.
-    #       The values are being set via.
-    #       Proposal: Add parsing for "--fnnType".
-    fnnType: str
-
-    def saveToFile(self, file: str) -> None:
-        """
-        Saves an instance to a JSON file
-        """
-        jsonFile = Path(file)
-        with jsonFile.open("w") as f:
-            f.write(jsonpickle.encode(self))
-
-    @classmethod
-    def fromCmdArgs(cls, args: argparse.Namespace) -> "Options":
-        return parseCmdArgs(cls, args)
 
 
 @dataclass
@@ -100,7 +83,7 @@ class GnnOptions(TrainArgs):
 
     total_epochs: int = 30
     save: bool = True
-    configFile: str = "./example/traingnn.json"
+    # configFile: str = "./example/traingnn.json"
     data_path: str = "./example/data/tox21.csv"
     use_compound_names: bool = False
     save_dir: str = ""
@@ -124,28 +107,13 @@ class GnnOptions(TrainArgs):
 
     # save_smiles_splits: bool = False
 
-    @classmethod
-    def fromCmdArgs(cls, args: argparse.Namespace, json_config: Optional[dict] = None):
-        # Initialize with JSON config if provided
-        if json_config:
-            opts = cls(**json_config)
-        else:
-            opts = cls()
-
-        # Update with command-line arguments
-        for key, value in vars(args).items():
-            if value is not None:
-                setattr(opts, key, value)
-
-        return opts
-
 
 class PredictGnnOptions(PredictArgs):
     """
     Dataclass to hold all options used for training the graph models
     """
 
-    configFile: str = "./example/predictgnn.json"
+    # configFile: str = "./example/predictgnn.json"
     calibration_atom_descriptors_path: str = None
     calibration_features_path: str = None
     calibration_interval_percentile: float = 95
@@ -183,28 +151,13 @@ class PredictGnnOptions(PredictArgs):
         ]
     ] = None
 
-    @classmethod
-    def fromCmdArgs(cls, args: argparse.Namespace, json_config: Optional[dict] = None):
-        # Initialize with JSON config if provided
-        if json_config:
-            opts = cls(**json_config)
-        else:
-            opts = cls()
-
-        # Update with command-line arguments
-        for key, value in vars(args).items():
-            if value is not None:
-                setattr(opts, key, value)
-
-        return opts
-
 
 class InterpretGNNoptions(InterpretArgs):
     """
     Dataclass to hold all options used for training the graph models
     """
 
-    configFile: str = "./example/interpret.json"
+    # configFile: str = "./example/interpret.json"
     data_path: str = "./example/data/smiles.csv"
     batch_size: int = 500
     c_puct: float = 10.0
@@ -213,66 +166,6 @@ class InterpretGNNoptions(InterpretArgs):
     prop_delta: float = 0.5
     property_id: List[int] = None
     rollout: int = 20
-
-    @classmethod
-    def fromCmdArgs(cls, args: argparse.Namespace, json_config: Optional[dict] = None):
-        # Initialize with JSON config if provided
-        if json_config:
-            opts = cls(**json_config)
-        else:
-            opts = cls()
-
-        # Update with command-line arguments
-        for key, value in vars(args).items():
-            if value is not None:
-                setattr(opts, key, value)
-
-        return opts
-
-
-def createCommandlineParser() -> argparse.ArgumentParser:
-    """
-    Build the parser for arguments with its two subparsers
-    """
-    parser = argparse.ArgumentParser(prog="deepFPlearn")
-    subparsers = parser.add_subparsers(help="Sub programs of deepFPlearn")
-
-    parser_train_gnn = subparsers.add_parser(
-        "traingnn", help="Train new GNN models with your data"
-    )
-    parser_train_gnn.set_defaults(method="traingnn")
-    parseTrainGnn(parser_train_gnn)
-
-    parser_predict_gnn = subparsers.add_parser(
-        "predictgnn", help="Predict with your GNN models"
-    )
-    parser_predict_gnn.set_defaults(method="predictgnn")
-    parsePredictGnn(parser_predict_gnn)
-
-    parser_interpret_gnn = subparsers.add_parser(
-        "interpretgnn", help="Interpret your GNN models"
-    )
-    parser_interpret_gnn.set_defaults(method="interpretgnn")
-    parseInterpretGnn(parser_interpret_gnn)
-
-    parser_train = subparsers.add_parser(
-        "train", help="Train new models with your data"
-    )
-    parser_train.set_defaults(method="train")
-    parseInputTrain(parser_train)
-
-    parser_input_predict = subparsers.add_parser(
-        "predict", help="Predict your data with existing models"
-    )
-    parser_input_predict.set_defaults(method="predict")
-    parseInputPredict(parser_input_predict)
-
-    parser_convert = subparsers.add_parser(
-        "convert", help="Convert known data files to pickle serialization files"
-    )
-    parser_convert.set_defaults(method="convert")
-    parseInputConvert(parser_convert)
-    return parser
 
 
 def parseInputTrain(parser_train: argparse.ArgumentParser) -> None:
@@ -287,15 +180,6 @@ def parseInputTrain(parser_train: argparse.ArgumentParser) -> None:
     input_tain_training_args = parser_train.add_argument_group("Training Configuration")
     input_tain_tracking_args = parser_train.add_argument_group("Tracking Configuration")
 
-    # Model Configuration
-    input_tain_general_args.add_argument(
-        "-f",
-        "--configFile",
-        metavar="FILE",
-        type=str,
-        help="Input JSON file that contains all information for training/predicting.",
-        default=None,
-    )
     input_tain_general_args.add_argument(
         "-i",
         "--inputFile",
@@ -303,7 +187,7 @@ def parseInputTrain(parser_train: argparse.ArgumentParser) -> None:
         type=str,
         help="The file containing the data for training in "
         "comma separated CSV format.The first column should be smiles.",
-        default="tests/data/smiles.csv",
+        required=True,
     )
     input_tain_general_args.add_argument(
         "-o",
@@ -462,6 +346,13 @@ def parseInputTrain(parser_train: argparse.ArgumentParser) -> None:
         help="Fraction[0,1] of the dataset that should be used for testing",
         default=0.2,
     )
+    input_tain_autoencoder_args.add_argument(
+        "--fnnType",
+        type=str,
+        choices=["FNN", "SNN"],
+        help="The type of the feedforward neural network.",
+        default="FNN",
+    )
     input_tain_training_args.add_argument(
         "-K",
         "--kFolds",
@@ -488,6 +379,12 @@ def parseInputTrain(parser_train: argparse.ArgumentParser) -> None:
     input_tain_training_args.add_argument(
         "--trainFNN",
         action="store_false",
+        # todo: This argument is confusing.
+        #       Users would expect this flag to be called "--no-trainFNN" or something similar.
+        #       Proposal: Rename the flag to "--no-trainFNN",
+        #                 but use the parameter dest="trainFNN", so that it
+        #                 still appears as "trainFNN" attribute in the resulting arg Namespace
+        #                 (set to False, if --no-trainFNN is provided).
         help="Deactivates the FNN training.",
         default=True,
     )
@@ -608,14 +505,6 @@ def parseInputPredict(parser_input_predict: argparse.ArgumentParser) -> None:
     input_predict_general_args = parser_input_predict.add_argument_group("General Configuration")
     input_predict_files_args = parser_input_predict.add_argument_group("Files")
     input_predict_files_args.add_argument(
-        "-f",
-        "--configFile",
-        metavar="FILE",
-        type=str,
-        help="JSON file that contains all information for training/predicting.",
-        default=None,
-    )
-    input_predict_files_args.add_argument(
         "-i",
         "--inputFile",
         metavar="FILE",
@@ -628,7 +517,7 @@ def parseInputPredict(parser_input_predict: argparse.ArgumentParser) -> None:
         "original identifiers. If this column is missing, the results are"
         "numbered in the order of their appearance in the input file."
         "A header is expected and respective column names are used.",
-        default="tests/data/smiles.csv",
+        required=True,
     )
     input_predict_files_args.add_argument(
         "-o",
@@ -644,7 +533,7 @@ def parseInputPredict(parser_input_predict: argparse.ArgumentParser) -> None:
         type=str,
         help="Output csv file name which will contain one prediction per input line. "
         "Default: prefix of input file name.",
-        default="results.csv",
+        default="results.csv",  # todo: This doesn't look like it will actually become the prefix of the input file name
     )
     input_predict_general_args.add_argument(
         "-t",
@@ -779,7 +668,7 @@ def parseTrainGnn(parser_train_gnn: argparse.ArgumentParser) -> None:
     train_gnn_general_args.add_argument(
         "--gpu",
         type=int,
-        choices=list(range(torch.cuda.device_count())),
+        # choices=list(range(torch.cuda.device_count())),
         help="Which GPU to use",
     )
     train_gnn_general_args.add_argument("--save", type=bool)
@@ -804,13 +693,6 @@ def parseTrainGnn(parser_train_gnn: argparse.ArgumentParser) -> None:
     )
 
     # FILES ARGUMENTS
-    train_gnn_files_args.add_argument(
-        "-f",
-        "--configFile",
-        metavar="FILE",
-        type=str,
-        help="JSON file that contains all configuration for training/predicting.",
-    )
     train_gnn_files_args.add_argument(
         "--save_dir",
         type=str,
@@ -1288,13 +1170,6 @@ def parsePredictGnn(parser_predict_gnn: argparse.ArgumentParser) -> None:
         help="Path to model checkpoint (.pt file)",
     )
     predict_gnn_files_args.add_argument(
-        "-f",
-        "--configFile",
-        type=str,
-        metavar="FILE",
-        help="Path to a .json file containing arguments. CLI arguments will override these.",
-    )
-    predict_gnn_files_args.add_argument(
         "--test_path",
         type=str,
         help="Path to CSV file for which predictions will be made.",
@@ -1413,13 +1288,6 @@ def parsePredictGnn(parser_predict_gnn: argparse.ArgumentParser) -> None:
 def parseInterpretGnn(parser_interpret_gnn: argparse.ArgumentParser) -> None:
     interpret_gnn_files_args = parser_interpret_gnn.add_argument_group("Files")
     interpret_gnn_interpret_args = parser_interpret_gnn.add_argument_group("Interpretation Configuration")
-    interpret_gnn_files_args.add_argument(
-        "-f",
-        "--configFile",
-        metavar="FILE",
-        type=str,
-        help="Input JSON file that contains all information for interpretation.",
-    )
     interpret_gnn_files_args.add_argument(
         "--preds_path",
         type=str,

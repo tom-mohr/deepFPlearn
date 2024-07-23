@@ -7,7 +7,7 @@ import tensorflow.keras.models
 from dfpl import options, settings
 
 
-def predict_values(df: pd.DataFrame, opts: options.Options) -> pd.DataFrame:
+def predict_values(df: pd.DataFrame, opts: options.PredictOptions) -> pd.DataFrame:
     """
     Predict a set of chemicals using a selected model.
 
@@ -16,7 +16,7 @@ def predict_values(df: pd.DataFrame, opts: options.Options) -> pd.DataFrame:
     :return:
     """
     model = tensorflow.keras.models.load_model(opts.fnnModelDir, compile=False)
-    model.compile(loss=opts.lossFunction, optimizer=opts.optimizer)
+    model.compile(loss=opts.lossFunction, optimizer=opts.optimizer)  # todo: Why are these parameters needed here?
     if opts.compressFeatures:
         sub_df = df[df["fpcompressed"].notnull()]
         x = np.array(

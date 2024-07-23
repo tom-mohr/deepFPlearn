@@ -24,7 +24,7 @@ from dfpl.utils import ae_scaffold_split, weight_split
 disable_eager_execution()
 
 
-def define_vae_model(opts: options.Options, output_bias=None) -> Tuple[Model, Model]:
+def define_vae_model(opts: options.TrainOptions, output_bias=None) -> Tuple[Model, Model]:
     input_size = opts.fpSize
     encoding_dim = opts.encFPSize
     ac_optimizer = optimizers.Adam(
@@ -161,7 +161,7 @@ def define_vae_model(opts: options.Options, output_bias=None) -> Tuple[Model, Mo
     return autoencoder, encoder
 
 
-def train_full_vae(df: pd.DataFrame, opts: options.Options) -> Model:
+def train_full_vae(df: pd.DataFrame, opts: options.TrainOptions) -> Model:
     """
     Trains an autoencoder on the given feature matrix X. The response matrix is only used to
     split the data into meaningful test and train sets.

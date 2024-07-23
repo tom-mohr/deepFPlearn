@@ -21,7 +21,7 @@ from dfpl import options, settings
 from dfpl.utils import ae_scaffold_split, weight_split
 
 
-def define_ac_model(opts: options.Options, output_bias=None) -> Tuple[Model, Model]:
+def define_ac_model(opts: options.TrainOptions, output_bias=None) -> Tuple[Model, Model]:
     """
     This function provides an autoencoder model to reduce a certain input to a compressed version.
 
@@ -131,7 +131,7 @@ def define_ac_model(opts: options.Options, output_bias=None) -> Tuple[Model, Mod
     return autoencoder, encoder
 
 
-def train_full_ac(df: pd.DataFrame, opts: options.Options) -> Model:
+def train_full_ac(df: pd.DataFrame, opts: options.TrainOptions) -> Model:
     """
     Trains an autoencoder on the given feature matrix X. The response matrix is only used to
     split the data into meaningful test and train sets.

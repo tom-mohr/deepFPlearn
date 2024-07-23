@@ -1,4 +1,3 @@
-import argparse
 import json
 import logging
 import os
@@ -6,11 +5,9 @@ import pathlib
 import sys
 import warnings
 from collections import defaultdict
-from pathlib import Path
 from random import Random
-from typing import Dict, List, Set, Tuple, Type, TypeVar, Union
+from typing import Dict, List, Set, Tuple, TypeVar, Union
 
-import jsonpickle
 import numpy as np
 import pandas as pd
 from rdkit import Chem, RDLogger
@@ -23,43 +20,6 @@ from tqdm import tqdm
 
 RDLogger.DisableLog("rdApp.*")
 T = TypeVar("T")
-
-
-def parseCmdArgs(cls: Type[T], args: argparse.Namespace) -> T:
-    """
-    Parses command-line arguments to create an instance of the given class.
-
-    Args:
-    cls: The class to create an instance of.
-    args: argparse.Namespace containing the command-line arguments.
-
-    Returns:
-    An instance of cls populated with values from the command-line arguments.
-    """
-    # Extract argument flags from sys.argv
-    arg_flags = {arg.lstrip("-") for arg in sys.argv if arg.startswith("-")}
-
-    # Create the result instance, which will be modified and returned
-    result = cls()
-
-    # Load JSON file if specified
-    if hasattr(args, "configFile") and args.configFile:
-        jsonFile = Path(args.configFile)
-        if jsonFile.exists() and jsonFile.is_file():
-            with jsonFile.open() as f:
-                content = jsonpickle.decode(f.read())
-                for key, value in vars(content).items():
-                    setattr(result, key, value)
-        else:
-            raise ValueError("Could not find JSON input file")
-
-    # Override with user-provided command-line arguments
-    for key in arg_flags:
-        if hasattr(args, key):
-            user_value = getattr(args, key, None)
-            setattr(result, key, user_value)
-
-    return result
 
 
 def makePathAbsolute(p: str) -> str:

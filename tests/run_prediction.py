@@ -9,7 +9,7 @@ import dfpl.predictions as p
 import dfpl.utils as utils
 
 project_directory = pathlib.Path(__file__).parent.absolute()
-test_predict_args = opt.Options(
+test_predict_args = opt.PredictOptions(
     inputFile=f"{project_directory}/data/smiles.csv",
     outputDir=f"{project_directory}/preds/",
     ecModelDir=utils.makePathAbsolute(f"{project_directory}/output/"),
@@ -23,7 +23,7 @@ test_predict_args = opt.Options(
 )
 
 
-def test_predictions(opts: opt.Options):
+def test_predictions(opts: opt.PredictOptions):
     opts = test_predict_args
 
     logging.basicConfig(

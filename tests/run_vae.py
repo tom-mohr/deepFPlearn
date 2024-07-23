@@ -7,7 +7,7 @@ import dfpl.utils as utils
 import dfpl.vae as vae
 
 project_directory = pathlib.Path(__file__).parent.absolute()
-test_train_args = opt.Options(
+test_train_args = opt.TrainOptions(
     inputFile=utils.makePathAbsolute(f"{project_directory}/data/S_dataset.csv"),
     ecModelDir=utils.makePathAbsolute(f"{project_directory}/data"),
     outputDir=utils.makePathAbsolute(f"{project_directory}/output"),
@@ -29,7 +29,7 @@ test_train_args = opt.Options(
 )
 
 
-def runVae(opts: opt.Options) -> None:
+def runVae(opts: opt.TrainOptions) -> None:
     """
     Run and test auto-encoder
     """
